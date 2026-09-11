@@ -314,6 +314,8 @@ function setupCustomizePanel(theme){
     primaryColor: document.getElementById("cpPrimary"),
     secondaryColor: document.getElementById("cpSecondary"),
     backgroundColor: document.getElementById("cpBg"),
+    headerBackground: document.getElementById("cpHeader"),
+    panelBackground: document.getElementById("cpPanelBg"),
     textColor: document.getElementById("cpText"),
     linkColor: document.getElementById("cpLink"),
     borderColor: document.getElementById("cpBorder"),
@@ -332,6 +334,8 @@ function setupCustomizePanel(theme){
     inputs.primaryColor.value = theme.primaryColor;
     inputs.secondaryColor.value = theme.secondaryColor;
     inputs.backgroundColor.value = theme.backgroundColor;
+    inputs.headerBackground.value = theme.headerBackground;
+    inputs.panelBackground.value = theme.panelBackground;
     inputs.textColor.value = theme.textColor;
     inputs.linkColor.value = theme.linkColor;
     inputs.borderColor.value = theme.borderColor;
@@ -400,6 +404,134 @@ function loadSavedTheme(theme){
       Object.assign(theme, JSON.parse(saved));
     }catch(e){ /* ignore corrupted data */ }
   }
+}
+
+/* =========================================================
+   EDITAR CONTENIDO — cambia textos/fotos de esta página y
+   los guarda en localStorage para que persistan al recargar
+   ========================================================= */
+const CONTENT_STORAGE_KEY = "retroProfileContent:" + PAGE_KEY;
+
+function loadSavedContent(){
+  try{
+    return JSON.parse(localStorage.getItem(CONTENT_STORAGE_KEY)) || {};
+  }catch(e){
+    return {};
+  }
+}
+function saveContent(content){
+  localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(content));
+}
+
+function applyContent(c){
+  if(c.username) document.getElementById("usernameTxt").textContent = c.username;
+  if(c.realname) document.getElementById("realnameTxt").textContent = c.realname;
+  if(c.profileTitle) document.getElementById("profileTitle").textContent = c.profileTitle;
+  if(c.subtitle) document.getElementById("profileSubtitle").textContent = c.subtitle;
+  if(c.age) document.getElementById("infoAge").textContent = c.age;
+  if(c.city) document.getElementById("infoCity").textContent = c.city;
+  if(c.pronouns) document.getElementById("infoPronouns").textContent = c.pronouns;
+  if(c.status) document.getElementById("infoStatus").textContent = c.status;
+  if(c.profilePicUrl) document.getElementById("profilePic").src = c.profilePicUrl;
+  if(c.podImageUrl) document.getElementById("podImg").src = c.podImageUrl;
+  if(c.podTitle) document.getElementById("podTitle").textContent = c.podTitle;
+  if(c.podCaption) document.getElementById("podCaption").textContent = c.podCaption;
+  if(c.musicCoverUrl) document.getElementById("musicCover").src = c.musicCoverUrl;
+  if(c.musicSong) document.getElementById("musicSong").textContent = c.musicSong;
+  if(c.musicArtist) document.getElementById("musicArtist").textContent = c.musicArtist;
+  if(c.musicAudioUrl) document.getElementById("musicAudio").src = c.musicAudioUrl;
+
+  if(c.mood){
+    const moodEl = document.getElementById("infoMood");
+    const img = moodEl.querySelector("img");
+    moodEl.innerHTML = escapeHtml(c.mood) + " " + (img ? img.outerHTML : "");
+  }
+
+  if(c.aboutMe){
+    document.getElementById("aboutMeBody").innerHTML =
+      escapeHtml(c.aboutMe).replace(/\n/g, "<br>") +
+      `<br><br><span class="hearts-sep">♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥</span>`;
+  }
+
+  if(c.interests){
+    document.querySelector("#interestsBody ul").innerHTML = c.interests
+      .split("\n").map(s => s.trim()).filter(Boolean)
+      .map(line => `<li>${escapeHtml(line)}</li>`).join("");
+  }
+
+  if(c.links){
+    document.getElementById("linksList").innerHTML = c.links
+      .split("\n").map(s => s.trim()).filter(Boolean)
+      .map(line => {
+        const [label, url] = line.split("|").map(s => s.trim());
+        if(!label || !url) return "";
+        return `<li><a href="${escapeHtml(url)}">${escapeHtml(label)}</a></li>`;
+      }).filter(Boolean).join("");
+  }
+}
+
+function fillContentInputs(){
+  const set = (id, text) => { document.getElementById(id).value = (text || "").trim(); };
+  set("ctUsername", document.getElementById("usernameTxt").textContent);
+  set("ctRealname", document.getElementById("realnameTxt").textContent);
+  set("ctProfileTitle", document.getElementById("profileTitle").textContent);
+  set("ctSubtitle", document.getElementById("profileSubtitle").textContent);
+  set("ctAge", document.getElementById("infoAge").textContent);
+  set("ctCity", document.getElementById("infoCity").textContent);
+  set("ctPronouns", document.getElementById("infoPronouns").textContent);
+  set("ctStatus", document.getElementById("infoStatus").textContent);
+  set("ctMood", document.getElementById("infoMood").childNodes[0] ? document.getElementById("infoMood").childNodes[0].textContent : "");
+  set("ctAboutMe", document.getElementById("aboutMeBody").childNodes[0] ? document.getElementById("aboutMeBody").childNodes[0].textContent : "");
+  set("ctInterests", Array.from(document.querySelectorAll("#interestsBody li")).map(li => li.textContent).join("\n"));
+  set("ctPodTitle", document.getElementById("podTitle").textContent);
+  set("ctPodCaption", document.getElementById("podCaption").textContent);
+  set("ctMusicSong", document.getElementById("musicSong").textContent);
+  set("ctMusicArtist", document.getElementById("musicArtist").textContent);
+  set("ctLinks", Array.from(document.querySelectorAll("#linksList a")).map(a => `${a.textContent} | ${a.getAttribute("href")}`).join("\n"));
+}
+
+function setupContentPanel(){
+  const overlay = document.getElementById("contentOverlay");
+  const statusEl = document.getElementById("contentStatus");
+
+  document.getElementById("contentEditBtn").addEventListener("click", () => {
+    fillContentInputs();
+    overlay.classList.add("open");
+  });
+  document.getElementById("contentCloseBtn").addEventListener("click", () => overlay.classList.remove("open"));
+  overlay.addEventListener("click", (e) => {
+    if(e.target === overlay) overlay.classList.remove("open");
+  });
+
+  document.getElementById("ctSaveBtn").addEventListener("click", async () => {
+    statusEl.textContent = "guardando...";
+    const val = (id) => document.getElementById(id).value.trim();
+    const content = loadSavedContent();
+
+    ["Username","Realname","ProfileTitle","Subtitle","Age","City","Pronouns","Status","Mood","AboutMe","Interests","PodTitle","PodCaption","MusicSong","MusicArtist","Links"]
+      .forEach(field => {
+        const v = val("ct" + field);
+        if(v) content[field.charAt(0).toLowerCase() + field.slice(1)] = v;
+      });
+
+    const profilePicFile = document.getElementById("ctProfilePic").files[0];
+    if(profilePicFile) content.profilePicUrl = await fileToDataURL(profilePicFile);
+    const podImageFile = document.getElementById("ctPodImage").files[0];
+    if(podImageFile) content.podImageUrl = await fileToDataURL(podImageFile);
+    const musicCoverFile = document.getElementById("ctMusicCover").files[0];
+    if(musicCoverFile) content.musicCoverUrl = await fileToDataURL(musicCoverFile);
+    const musicFile = document.getElementById("ctMusicFile").files[0];
+    if(musicFile) content.musicAudioUrl = await fileToDataURL(musicFile);
+
+    saveContent(content);
+    applyContent(content);
+    statusEl.textContent = "¡guardado! ♥";
+  });
+
+  document.getElementById("ctResetBtn").addEventListener("click", () => {
+    localStorage.removeItem(CONTENT_STORAGE_KEY);
+    location.reload();
+  });
 }
 
 /* =========================================================
@@ -742,6 +874,8 @@ ${styleTag}
       <label>Color primario <input type="color" id="cpPrimary"></label>
       <label>Color secundario <input type="color" id="cpSecondary"></label>
       <label>Fondo exterior <input type="color" id="cpBg"></label>
+      <label>Fondo del header/footer <input type="color" id="cpHeader"></label>
+      <label>Fondo de los contenedores <input type="color" id="cpPanelBg"></label>
       <label>Color de texto <input type="color" id="cpText"></label>
       <label>Color de links <input type="color" id="cpLink"></label>
       <label>Color de bordes <input type="color" id="cpBorder"></label>
@@ -868,6 +1002,9 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSavedTheme(theme);
   applyTheme(theme);
   setupCustomizePanel(theme);
+
+  applyContent(loadSavedContent());
+  setupContentPanel();
 
   hideDeletedSeeds("guestbookList", GUESTBOOK_DELETED_SEEDS_KEY);
   hideDeletedSeeds("podCommentsList", POD_DELETED_SEEDS_KEY);

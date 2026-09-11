@@ -8,11 +8,11 @@
   --primary-color:#ff00cc;
 
   --secondary-color:#00ccff;
-  --background-color:#19b626;
+  --background-color:#ffffff;
   --text-color:#222222;
-  --border-color:#1e9e12;
+  --border-color:#fdfffd;
   --link-color:#0033ff;
-  --panel-background:#2ed618;
+  --panel-background:#9c0303;
   --header-background:#ff66cc;
 
   /* --- estructura --- */
@@ -23,7 +23,6 @@
 
   /* --- fondo exterior --- */
   --outer-bg-image:none;
-  --outer-bg-type:solid; /* solo referencia visual, el control real es JS */
 
   /* --- sombras / efectos --- */
   --module-shadow:2px 2px 6px rgba(0,0,0,0.35);
@@ -203,6 +202,7 @@ a:hover{
 /* ============ MODULES (widgets) ============ */
 .module{
   border:var(--border-width) solid var(--border-color);
+  border-radius:var(--border-radius);
   background:var(--panel-background);
   box-shadow:var(--module-shadow);
 }
@@ -376,14 +376,12 @@ a:hover{
   outline:1px solid var(--border-color);
   cursor:pointer;
   transition:transform 0.1s;
+  aspect-ratio:1 / 1;
+  overflow:hidden;
 }
 .gallery-thumb-wrap:hover{
   transform:scale(1.05) rotate(-1deg);
   outline-color:var(--primary-color);
-}
-.gallery-thumb-wrap{
-  aspect-ratio:1 / 1;
-  overflow:hidden;
 }
 .gallery-thumb-wrap img{
   display:block;
@@ -568,12 +566,10 @@ a:hover{
   background:#ddd;
   border:1px solid #999;
   margin:0 4px;
+  cursor:pointer;
 }
 #musicAudio{
   display:none;
-}
-.music-progress-outer{
-  cursor:pointer;
 }
 .music-progress-inner{
   height:100%;
@@ -604,7 +600,7 @@ a:hover{
 }
 .banner-88x31{
   width:172px;
-  height:px;
+  height:826px;
   object-fit:cover;
   border:1px solid #000;
 }
